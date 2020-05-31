@@ -1,32 +1,36 @@
 import Phaser from "phaser";
-import logoImg from "./assets/logo.png";
+import Actions from "./Actions"
 
 const config = {
-  type: Phaser.AUTO,
-  parent: "phaser-example",
-  width: 800,
-  height: 600,
-  scene: {
-    preload: preload,
-    create: create
-  }
+    type: Phaser.AUTO,
+    parent: "phaser-example",
+    width: 1024,
+    height: 768,
+    physics: {
+        default: 'arcade',
+        arcade: {
+            gravity: {y: 1000},
+            debug: false
+        }
+    },
+    scene: {
+        preload: preload,
+        create: create
+    }
 };
 
 const game = new Phaser.Game(config);
 
 function preload() {
-  this.load.image("logo", logoImg);
+    this.load.image('hamster', 'src/assets/hamster.png');
+    this.load.image('sky', 'src/assets/sky.png');
 }
 
 function create() {
-  const logo = this.add.image(400, 150, "logo");
-
-  this.tweens.add({
-    targets: logo,
-    y: 450,
-    duration: 2000,
-    ease: "Power2",
-    yoyo: true,
-    loop: -1
-  });
+    let context = this;
+    this.add.image(512, 384, 'sky');
+    this.hamster = this.physics.add.sprite(100, 245, 'hamster');
+    this.input.keyboard.on('keydown_SPACE', function () {
+        Actions.jump(context);
+    });
 }
