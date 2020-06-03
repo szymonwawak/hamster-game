@@ -2,28 +2,30 @@ import Phaser from "phaser";
 import Actions from "./Actions"
 
 let score = 0;
+let group;
 let scoreText;
 let generatingSpeed = 0;
 let movementSpeed = 0;
+let scene;
+let generator;
 const config = {
     type: Phaser.AUTO,
     parent: "phaser-example",
     width: 1024,
     height: 768,
     physics: {
-        default: 'arcade',
-        arcade: {
-            gravity: {y: 1000},
-            debug: false
+        default: 'matter',
+        matter: {
         }
     },
     scene: {
         preload: preload,
-        create: create
+        create: create,
+        update: update
     },
 };
 
-const game = new Phaser.Game(config);
+let game = new Phaser.Game(config);
 
 function preload() {
     this.load.image('hamster', 'src/assets/hamster.png');
@@ -33,53 +35,245 @@ function preload() {
 }
 
 function create() {
+    game.start('MainMenu');
     score = 0;
-    generatingSpeed = 300;
-    movementSpeed = 200;
+    generatingSpeed = 700;
+    movementSpeed = 5;
     let context = this;
+    scene = game.scene;
     let sceneSize = this.scale.displaySize;
     this.add.image(sceneSize.width / 2, sceneSize.height / 2, 'sky');
-    this.hamster = this.physics.add.sprite(100, 245, 'hamster');
-    this.hamster.setCollideWorldBounds(true);
-    this.hamster.body.onWorldBounds = true;
-    this.hamster.body.world.on('worldbounds', function () {
-        this.scene.scene.restart();
+    this.hamster = this.matter.add.sprite(200, 245, 'hamster');
+    this.matter.world.setBounds(-200, 0, sceneSize.width, sceneSize.height, 1, true, false, true, true);
+    this.hamster.setBody({
+        "type": "fromPhysicsEditor",
+        "label": "hamster",
+        "isStatic": false,
+        "inertia": Infinity,
+        "density": 0.10000000149011612,
+        "restitution": 1,
+        "friction": 0,
+        "frictionAir": 0,
+        "frictionStatic": 1,
+        "fixtures": [
+            {
+                "label": "hamster",
+                "isSensor": false,
+                "vertices": [
+                    [{"x": 24, "y": 91}, {"x": 33, "y": 92}, {"x": 38, "y": 89}, {"x": 19, "y": 83}, {
+                        "x": 19,
+                        "y": 86
+                    }],
+                    [{"x": 90, "y": 95}, {"x": 99, "y": 91}, {"x": 102, "y": 86}, {"x": 1, "y": 58}, {
+                        "x": 77,
+                        "y": 92
+                    }],
+                    [{"x": 137, "y": 76}, {"x": 139, "y": 64}, {"x": 128, "y": 84}, {"x": 130, "y": 84}],
+                    [{"x": 0, "y": 69}, {"x": 4, "y": 77}, {"x": 19, "y": 83}, {"x": 38, "y": 89}, {
+                        "x": 77,
+                        "y": 92
+                    }, {"x": 1, "y": 58}],
+                    [{"x": 96, "y": 6}, {"x": 83, "y": 0}, {"x": 64, "y": 0}, {"x": 51, "y": 6}, {
+                        "x": 45,
+                        "y": 13
+                    }, {"x": 42, "y": 23}, {"x": 103, "y": 16}],
+                    [{"x": 11, "y": 82}, {"x": 19, "y": 83}, {"x": 4, "y": 77}],
+                    [{"x": 20, "y": 39}, {"x": 20, "y": 46}, {"x": 141, "y": 64}, {"x": 42, "y": 23}, {
+                        "x": 38,
+                        "y": 23
+                    }, {"x": 29, "y": 27}, {"x": 23, "y": 33}],
+                    [{"x": 4, "y": 53}, {"x": 4, "y": 55}, {"x": 139, "y": 64}, {"x": 141, "y": 64}, {
+                        "x": 20,
+                        "y": 46
+                    }, {"x": 9, "y": 49}],
+                    [{"x": 116, "y": 20}, {"x": 110, "y": 17}, {"x": 103, "y": 16}, {"x": 42, "y": 23}, {
+                        "x": 141,
+                        "y": 64
+                    }, {"x": 119, "y": 24}],
+                    [{"x": 51, "y": 98}, {"x": 67, "y": 98}, {"x": 74, "y": 95}, {"x": 77, "y": 92}, {
+                        "x": 38,
+                        "y": 89
+                    }, {"x": 41, "y": 93}],
+                    [{"x": 147, "y": 58}, {"x": 150, "y": 51}, {"x": 150, "y": 41}, {"x": 147, "y": 34}, {
+                        "x": 136,
+                        "y": 25
+                    }, {"x": 128, "y": 23}, {"x": 119, "y": 24}, {"x": 141, "y": 64}],
+                    [{"x": 110, "y": 89}, {"x": 125, "y": 87}, {"x": 128, "y": 84}, {"x": 139, "y": 64}, {
+                        "x": 102,
+                        "y": 86
+                    }],
+                    [{"x": 102, "y": 86}, {"x": 139, "y": 64}, {"x": 4, "y": 55}, {"x": 1, "y": 58}]
+                ]
+            }
+        ]
     });
+    this.hamster.body.onWorldBounds = true;
     this.input.keyboard.on('keydown_SPACE', function () {
         Actions.jump(context);
     });
-    this.clouds = this.physics.add.group();
-    this.seeds = this.physics.add.group();
-    this.generator = this.time.addEvent({delay: 1000, callback: createCloud, callbackScope: this, loop: true});
-    this.time.addEvent({delay: (generatingSpeed * 2.5), callback: createSeed, callbackScope: this, loop: true});
-    this.physics.add.overlap(this.hamster, this.seeds, collectSeed, null, this);
-    this.physics.add.overlap(this.hamster, this.clouds, hitCloud, null, this);
-    scoreText = this.add.text(16, 16, 'Score: 0', {fontSize: '32px', fill: '#000'});
+    group = this.matter.world.nextGroup(true);
+    this.hamster.setCollisionGroup(group);
+    generator = this.time.addEvent({
+        delay: (generatingSpeed * 2.5),
+        callback: createCloud,
+        callbackScope: this,
+        loop: true
+    });
+    this.time.addEvent({delay: generatingSpeed, callback: createSeed, callbackScope: this, loop: true});
+    // this.physics.add.overlap(this.hamster, this.seeds, collectSeed, null, this);
+    // this.physics.add.overlap(this.hamster, this.clouds, gameOver, null, this);
+    scoreText = this.add.text(16, 16, 'Wynik: 0', {fontSize: '32px', fill: '#000'});
+
+    this.matter.world.on('collisionstart', function (event) {
+        if (event.pairs[0].bodyB.label === "hamster")
+            this.scene.scene.restart();
+        else
+            event.pairs[0].bodyB.gameObject.destroy();
+    })
+}
+
+function update() {
+    if (this.hamster.body)
+        this.matter.overlap(this.hamster.body, null, checkOverlaps, null, null);
+}
+
+function checkOverlaps(firstBody, secondBody) {
+    if (firstBody.label === "hamster" && secondBody.label === "cloud") {
+        gameOver();
+    } else if (firstBody.label === "hamster" && secondBody.label === "seed") {
+        collectSeed(secondBody)
+    }
+
+}
+
+function collectSeed(seed) {
+    seed.gameObject.destroy();
+    movementSpeed += 0.2;
+    generatingSpeed -= 8;
+    generator.delay = generatingSpeed * 2.5;
+    score++;
+    scoreText.setText("Wynik: " + score)
+}
+
+function gameOver() {
+    scene.scenes[0].scene.restart();
 }
 
 function createCloud() {
-    let height = Math.random() * 768;
-    let cloud = this.clouds.create(this.game.config.width, height, 'cloud');
-    cloud.body.velocity.x = -movementSpeed;
-    cloud.body.allowGravity = false;
+    let height = (Math.random() * 600) + 50;
+    let cloud = this.matter.add.sprite(this.game.config.width, height, 'cloud');
+    cloud.setBody({
+        "type": "fromPhysicsEditor",
+        "label": "cloud",
+        "isStatic": false,
+        "density": 0.10000000149011612,
+        "restitution": 0,
+        "friction": 0.10000000149011612,
+        "frictionStatic": 0.5,
+        "fixtures": [
+            {
+                "isSensor": false,
+                "label": "cloud",
+                "vertices": [
+                    [{"x": 53, "y": 117}, {"x": 60, "y": 115}, {"x": 62, "y": 79}, {"x": 53, "y": 111}],
+                    [{"x": 47, "y": 146}, {"x": 51, "y": 146}, {"x": 49, "y": 142}, {"x": 47, "y": 143}],
+                    [{"x": 90, "y": 81}, {"x": 88, "y": 81}, {"x": 86, "y": 89}, {"x": 90, "y": 84}],
+                    [{"x": 49, "y": 142}, {"x": 51, "y": 146}, {"x": 64, "y": 132}, {"x": 54, "y": 133}, {
+                        "x": 52,
+                        "y": 134
+                    }],
+                    [{"x": 60, "y": 79}, {"x": 87, "y": 79}, {"x": 94, "y": 77}, {"x": 128, "y": 23}, {
+                        "x": 124,
+                        "y": 24
+                    }, {"x": 57, "y": 76}],
+                    [{"x": 31, "y": 10}, {"x": 22, "y": 20}, {"x": 20, "y": 28}, {"x": 11, "y": 77}, {
+                        "x": 17,
+                        "y": 80
+                    }, {"x": 42, "y": 76}, {"x": 44, "y": 5}],
+                    [{"x": 32, "y": 81}, {"x": 42, "y": 76}, {"x": 17, "y": 80}],
+                    [{"x": 51, "y": 78}, {"x": 57, "y": 76}, {"x": 60, "y": 9}, {"x": 49, "y": 5}, {
+                        "x": 44,
+                        "y": 5
+                    }, {"x": 42, "y": 76}],
+                    [{"x": 12, "y": 30}, {"x": 3, "y": 39}, {"x": 0, "y": 46}, {"x": 0, "y": 61}, {
+                        "x": 11,
+                        "y": 77
+                    }, {"x": 20, "y": 28}],
+                    [{"x": 98, "y": 101}, {"x": 95, "y": 98}, {"x": 81, "y": 100}, {"x": 82, "y": 115}, {
+                        "x": 84,
+                        "y": 115
+                    }],
+                    [{"x": 97, "y": 4}, {"x": 88, "y": 0}, {"x": 73, "y": 0}, {"x": 66, "y": 3}, {
+                        "x": 60,
+                        "y": 9
+                    }, {"x": 105, "y": 14}],
+                    [{"x": 146, "y": 67}, {"x": 150, "y": 58}, {"x": 150, "y": 43}, {"x": 118, "y": 77}, {
+                        "x": 128,
+                        "y": 78
+                    }, {"x": 135, "y": 76}],
+                    [{"x": 4, "y": 70}, {"x": 11, "y": 77}, {"x": 0, "y": 61}],
+                    [{"x": 120, "y": 19}, {"x": 112, "y": 15}, {"x": 60, "y": 9}, {"x": 57, "y": 76}, {
+                        "x": 124,
+                        "y": 24
+                    }],
+                    [{"x": 141, "y": 29}, {"x": 128, "y": 23}, {"x": 94, "y": 77}, {"x": 99, "y": 80}, {
+                        "x": 118,
+                        "y": 77
+                    }, {"x": 150, "y": 43}, {"x": 147, "y": 36}],
+                    [{"x": 113, "y": 80}, {"x": 118, "y": 77}, {"x": 99, "y": 80}],
+                    [{"x": 88, "y": 81}, {"x": 87, "y": 79}, {"x": 62, "y": 79}, {"x": 63, "y": 116}, {
+                        "x": 81,
+                        "y": 100
+                    }, {"x": 86, "y": 89}],
+                    [{"x": 82, "y": 115}, {"x": 81, "y": 100}, {"x": 63, "y": 116}, {"x": 64, "y": 132}, {
+                        "x": 66,
+                        "y": 132
+                    }],
+                    [{"x": 58, "y": 123}, {"x": 54, "y": 133}, {"x": 64, "y": 132}, {"x": 60, "y": 122}],
+                    [{"x": 60, "y": 115}, {"x": 63, "y": 116}, {"x": 62, "y": 79}],
+                    [{"x": 60, "y": 122}, {"x": 64, "y": 132}, {"x": 63, "y": 116}]
+                ]
+            }
+        ]
+    });
+    cloud.setFrictionAir(0);
+    cloud.setIgnoreGravity(true);
+    cloud.setVelocityX(-movementSpeed);
+    cloud.setCollisionGroup(group)
 }
 
 function createSeed() {
-    let height = Math.random() * 768;
-    let seed = this.seeds.create(this.game.config.width, height, 'seed');
-    seed.body.velocity.x = -200;
-    seed.body.allowGravity = false;
+    let height = (Math.random() * 720) + 20;
+    let seed = this.matter.add.sprite(this.game.config.width, height, 'seed');
+    seed.setBody({
+        "type": "fromPhysicsEditor",
+        "label": "seed",
+        "isStatic": false,
+        "density": 0,
+        "mass": 0,
+        "restitution": 0,
+        "friction": 0,
+        "frictionStatic": 0.5,
+        "fixtures": [
+            {
+                "label": "seed",
+                "isSensor": false,
+                "vertices": [
+                    [{"x": 15, "y": 31}, {"x": 20, "y": 26}, {"x": 20, "y": 13}, {"x": 16, "y": 3}, {
+                        "x": 13,
+                        "y": 0
+                    }, {"x": 0, "y": 13}, {"x": 0, "y": 26}, {"x": 5, "y": 31}],
+                    [{"x": 7, "y": 0}, {"x": 4, "y": 3}, {"x": 0, "y": 13}, {"x": 13, "y": 0}]
+                ]
+            }
+        ]
+    });
+    seed.setCollisionGroup(group);
+    seed.setIgnoreGravity(true);
+    seed.setVelocityX(-5);
+    seed.setFrictionAir(0);
 }
 
-function collectSeed(hamster, seed) {
-    seed.disableBody(true, true);
-    movementSpeed += 4;
-    generatingSpeed--;
-    this.generator.delay = generatingSpeed * 2.5;
-    score++;
-    scoreText.setText("Score: " + score)
-}
-
-function hitCloud() {
-    this.scene.restart();
+function kill(obj) {
+    obj.destroy();
 }

@@ -1,6 +1,6 @@
 class Actions {
     static jump(ctx) {
-        ctx.hamster.body.velocity.y = -350;
+        ctx.hamster.setVelocityY(-8);
     }
 }
 
