@@ -1,5 +1,5 @@
-import Actions from "./Actions";
-import {Utils} from "./Utils";
+import Actions from "../Actions";
+import {Utils} from "../Utils";
 
 export class GameScreen extends Phaser.Scene {
     constructor() {
@@ -9,8 +9,11 @@ export class GameScreen extends Phaser.Scene {
     preload() {
         this.load.image('hamster', 'src/assets/hamster.png');
         this.load.image('sky', 'src/assets/sky.png');
-        this.load.image('cloud', 'src/assets/cloud.png')
-        this.load.image('seed', 'src/assets/seed.png')
+        this.load.image('cloud', 'src/assets/cloud.png');
+        this.load.image('seed', 'src/assets/seed.png');
+        this.load.audio('collectSound', 'src/sounds/collect.mp3')
+        this.load.audio('gameOverSound', 'src/sounds/gameOver.mp3')
+        this.load.audio('jumpSound', 'src/sounds/jump.mp3')
     }
 
     create() {
@@ -29,19 +32,24 @@ export class GameScreen extends Phaser.Scene {
         this.movementSpeed = 5;
         this.sceneSize = this.scale.displaySize;
         this.sceneWidth = this.sceneSize.width;
+        this.sceneHeight = this.sceneSize.height;
         this.sceneCenterWidth = this.sceneWidth / 2;
         this.sceneCenterHeight = this.sceneSize.height / 2;
         this.group = this.matter.world.nextGroup(true);
+        this.collectSound = this.sound.add('collectSound');
+        this.gameOverSound = this.sound.add('gameOverSound');
+        this.jumpSound = this.sound.add('jumpSound');
     }
 
     createInputListeners(context) {
         this.input.keyboard.on('keydown_SPACE', function () {
             Actions.jump(context);
+            this.scene.jumpSound.play();
         });
     }
 
     putContentOntoScreen(context) {
-        this.add.image(this.sceneCenterWidth, this.sceneCenterHeight, 'sky');
+        this.add.image(this.sceneCenterWidth, this.sceneCenterHeight, 'sky').setDisplaySize(this.sceneWidth, this.sceneHeight);
         let pauseLabel = this.add.text(this.sceneSize.width - 100, 20, 'Pauza', {font: '24px Arial', fill: '#fff'});
         pauseLabel.inputEnabled = true;
         pauseLabel.setInteractive();
@@ -51,7 +59,7 @@ export class GameScreen extends Phaser.Scene {
             scene.pause();
             scene.launch('PausedScreen')
         });
-        this.scoreText = this.add.text(16, 16, 'Wynik: 0', {fontSize: '32px', fill: '#000'});
+        this.scoreText = this.add.text(16, 16, 'Wynik: 0', {font: '32px Arial', fill: '#fff'});
     }
 
     setWorldBounds() {
@@ -77,7 +85,7 @@ export class GameScreen extends Phaser.Scene {
 
     createCloud() {
         let height = (Math.random() * 600) + 50;
-        let cloud = this.matter.add.sprite(this.sceneWidth, height, 'cloud');
+        let cloud = this.matter.add.sprite(this.sceneWidth + 100, height, 'cloud');
         Utils.setCloudBody(cloud);
         cloud.setFrictionAir(0);
         cloud.setIgnoreGravity(true);
@@ -87,7 +95,7 @@ export class GameScreen extends Phaser.Scene {
 
     createSeed() {
         let height = (Math.random() * 720) + 20;
-        let seed = this.matter.add.sprite(this.sceneWidth, height, 'seed');
+        let seed = this.matter.add.sprite(this.sceneWidth + 100, height, 'seed');
         Utils.setSeedBody(seed);
         seed.setFrictionAir(0);
         seed.setIgnoreGravity(true);
@@ -120,6 +128,7 @@ export class GameScreen extends Phaser.Scene {
 
     finishGame() {
         let scene = this.scene;
+        this.gameOverSound.play();
         scene.stop();
         scene.launch('GameOverScreen', {score: this.score});
     }
@@ -130,6 +139,7 @@ export class GameScreen extends Phaser.Scene {
         context.generatingSpeed -= 8;
         context.cloudGenerator.delay = this.generatingSpeed * 2.5;
         context.score++;
-        context.scoreText.setText("Wynik: " + context.score)
+        context.scoreText.setText("Wynik: " + context.score);
+        this.collectSound.play();
     }
 }

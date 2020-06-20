@@ -1,4 +1,4 @@
-import {Utils} from "./Utils";
+import {Utils} from "../Utils";
 
 export class GameOverScreen extends Phaser.Scene {
 
@@ -19,7 +19,7 @@ export class GameOverScreen extends Phaser.Scene {
         let sceneSize = this.scale.displaySize,
             sceneCenterWidth = sceneSize.width / 2,
             sceneCenterHeight = sceneSize.height / 2;
-        this.add.image(sceneCenterWidth, sceneCenterHeight, 'sky');
+        this.add.image(sceneCenterWidth, sceneCenterHeight, 'sky').setDisplaySize(sceneSize.width, sceneSize.height);
         this.add.text(sceneCenterWidth - 200, sceneCenterHeight - 150, 'Koniec gry! Wynik: ' + this.score, {
             font: '40px Arial',
             fill: '#fff'

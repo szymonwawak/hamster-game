@@ -1,22 +1,21 @@
 import Phaser from "phaser";
-import {GameScreen} from "./GameScreen";
-import {PauseScreen} from "./PauseScreen";
-import {MainMenu} from "./MainMenu";
-import {GameOverScreen} from "./GameOverScreen";
+import {GameScreen} from "./screens/GameScreen";
+import {PauseScreen} from "./screens/PauseScreen";
+import {MainMenu} from "./screens/MainMenu";
+import {GameOverScreen} from "./screens/GameOverScreen";
 
 const config = {
     type: Phaser.AUTO,
-    width: 1024,
-    height: 768,
+    height:1080,
+    width: 1920,
+    scale: {
+        mode: Phaser.Scale.RESIZE,
+    },
     physics: {
         default: 'matter',
         matter: {}
     },
-    scene: [MainMenu, GameOverScreen, GameScreen, PauseScreen]
+    scene: [MainMenu, GameScreen, GameOverScreen, PauseScreen]
 };
 
 new Phaser.Game(config);
-
-function create() {
-    this.scene.start('MainMenu');
-}
